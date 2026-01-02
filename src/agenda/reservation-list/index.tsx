@@ -107,14 +107,31 @@ class ReservationList extends Component<ReservationListProps, State> {
   }
 
   componentDidUpdate(prevProps: ReservationListProps) {
-    if (this.props.topDay && prevProps.topDay && prevProps !== this.props) {
-      if (!sameDate(prevProps.topDay, this.props.topDay)) {
-        this.setState({reservations: []},
-          () => this.updateReservations(this.props)
-        );
-      } else {
-        this.updateReservations(this.props);
-      }
+    const {topDay, items} = this.props;
+    const {topDay: prevTopDay, items: prevItems} = prevProps;
+
+    // Only react when the visible "top day" or the agenda items actually change.
+    // Using `prevProps !== this.props` here is unsafe because React may recreate
+    // the props object on every render, which can lead to unnecessary updates and
+    // "Maximum update depth exceeded" loops under newer React versions.
+    if (!topDay || !prevTopDay) {
+      return;
+    }
+
+    const topDayChanged = !sameDate(prevTopDay, topDay);
+    const itemsChanged = prevItems !== items;
+
+    if (!topDayChanged && !itemsChanged) {
+      return;
+    }
+
+    if (topDayChanged) {
+      this.setState(
+        {reservations: []},
+        () => this.updateReservations(this.props)
+      );
+    } else if (itemsChanged) {
+      this.updateReservations(this.props);
     }
   }
 
